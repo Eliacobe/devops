@@ -1,0 +1,78 @@
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: conference
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./infra/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "5432:5432"
+
+  weather:
+
+    build: ./services/weather
+    environment:
+      - PORT=5000
+    ports:
+      - "5000:5000"
+    depends_on:
+      - postgres
+
+  catalog:
+    build: ./services/catalog
+    environment:
+      - PG_HOST=postgres
+      - PG_PORT=5432
+      - PG_USER=postgres
+      - PG_PASSWORD=postgres
+      - PG_DB=conference
+    depends_on:
+      - postgres
+    ports:
+      - "4003:4003"
+
+  booking:
+    build: ./services/booking
+    environment:
+      - PG_HOST=postgres
+      - PG_PORT=5432
+      - PG_USER=postgres
+      - PG_PASSWORD=postgres
+      - PG_DB=conference
+      - WEATHER_URL=http://weather:5000
+      - MONGO_URL=mongodb://mongo:27017
+      - MONGO_DB=conference_logs
+
+    depends_on:
+      - postgres
+      - weather
+    ports:
+      - "4002:4002"
+
+  api-gateway:
+    build: ./services/api-gateway
+    ports:
+      - "3000:3000"
+    depends_on:
+      - catalog
+      - weather
+      - booking
+
+  mongo:
+    image: mongo:7
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+
+
+volumes:
+  pgdata:
+  mongo_data:
+

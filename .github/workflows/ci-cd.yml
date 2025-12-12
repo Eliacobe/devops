@@ -12,19 +12,20 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # CI: build containers to catch Dockerfile/code issues
-      - name: Build with Docker Compose
+      - name: Build with Docker Compose (CI)
         run: docker compose build
 
-      # CD: SSH to EC2 and redeploy
-      - name: Deploy to EC2
-        uses: appleboy/ssh-action@v1.2.0
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USER }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
+      - name: Write SSH key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s' "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/ec2_key
+          chmod 600 ~/.ssh/ec2_key
+
+      - name: Deploy to EC2 (CD)
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/ec2_key ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} '
             cd ~/conference-booking || exit 1
             git pull
             docker-compose up -d --build
             docker ps
+          '

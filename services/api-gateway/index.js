@@ -3,7 +3,7 @@ const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
 
-// ---- PROXY ROUTES ----
+//hello
 
 // Forward /weather/* to weather service
 app.use('/weather', createProxyMiddleware({

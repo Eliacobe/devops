@@ -1,9 +1,7 @@
 const express = require('express');
-const bodyParser = require('body-parser');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 
 const app = express();
-app.use(bodyParser.json());
 
 // ---- PROXY ROUTES ----
 
